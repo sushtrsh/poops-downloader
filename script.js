@@ -1,4 +1,4 @@
-document.getElementById('downloadForm').addEventListener('submit', function (e) {
+document.getElementById('downloadForm').addEventListener('submit', async function (e) {
     e.preventDefault(); // Mencegah form dikirim secara default
 
     const videoUrl = document.getElementById('video_url').value;
@@ -13,21 +13,38 @@ document.getElementById('downloadForm').addEventListener('submit', function (e) 
     document.getElementById('loading').style.display = 'block';
     document.getElementById('preview').style.display = 'none';
 
-    // Simulasikan proses pengunduhan (contoh: delay 2 detik)
-    setTimeout(function () {
-        // Sembunyikan spinner
+    try {
+        // Kirim request ke backend
+        const response = await fetch('http://localhost:3000/download', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: videoUrl }),
+        });
+
+        const data = await response.json();
+
+        if (data.videoUrl) {
+            const videoPreview = document.getElementById('videoPreview');
+            const downloadLink = document.getElementById('downloadLink');
+
+            // Set pratinjau video
+            videoPreview.src = data.videoUrl;
+
+            // Set link unduhan
+            downloadLink.href = data.videoUrl;
+            downloadLink.download = "downloaded_video.mp4";
+
+            // Sembunyikan spinner dan tampilkan preview
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('preview').style.display = 'block';
+        } else {
+            throw new Error(data.error || "Failed to fetch video.");
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Failed to download video. Please try again.");
         document.getElementById('loading').style.display = 'none';
-
-        // Tampilkan preview dan tombol unduhan
-        document.getElementById('preview').style.display = 'block';
-
-        // Set pratinjau video
-        const videoPreview = document.getElementById('videoPreview');
-        videoPreview.src = videoUrl; // Gunakan URL video yang dimasukkan pengguna
-
-        // Set link unduhan
-        const downloadLink = document.getElementById('downloadLink');
-        downloadLink.href = videoUrl; // Gunakan URL video yang dimasukkan pengguna
-        downloadLink.download = "downloaded_video.mp4"; // Nama file unduhan
-    }, 2000);
+    }
 });
